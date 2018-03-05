@@ -1,14 +1,14 @@
 package tomograph;
 
 public class Calculator {
-
+    int[][] greyScaleArr;
     int size;
 
     public Calculator(int size) {
         this.size = size;
     }
 
-    public Calculator(){
+    public Calculator() {
 
     }
 
@@ -30,5 +30,17 @@ public class Calculator {
 
     public void setSize(int size) {
         this.size = size;
+    }
+
+    public Point calculateMiddleEndPoint(Point sPoint) {
+        return Point.mirrorPoint(sPoint, size);
+    }
+
+    public int[][] getGreyScaleArr() {
+        return greyScaleArr;
+    }
+
+    public void setGreyScaleArr(int[][] greyScaleArr) {
+        this.greyScaleArr = greyScaleArr;
     }
 }

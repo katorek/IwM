@@ -3,6 +3,8 @@ package tomograph;
 import java.io.File;
 import java.net.URL;
 import java.util.ResourceBundle;
+import java.util.function.UnaryOperator;
+import java.util.regex.Pattern;
 
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -56,15 +58,18 @@ public class Controller {
 
         calculator = new Calculator(myImage.getGreyScaleImgArr().length);
 
+        calculator.setGreyScaleArr(myImage.getGreyScaleImgArr());
 
         oryginalImage.setImage(myImage.getFxImage());
 
         int[][] arr = myImage.getGreyScaleImgArr();
+
+
+        //co jaki kat wyzanczyc punkty !
+        double kAngle = Double.parseDouble(angleL.getText()) / Double.parseDouble(countEmiters.getText());
         //rownianie okregu to 1/4*x^2 + 1/4*y^2 - 1/4 = 0
-
+        //punkt startowy na samej gorze (0,s/2)
     }
-
-
 
     private File loadFile() {
         FileChooser fileChooser = new FileChooser();
@@ -80,7 +85,6 @@ public class Controller {
         return fileChooser.showOpenDialog(imagePickButton.getScene().getWindow());
     }
 
-
     @FXML
     void initialize() {
         assert oryginalImage != null : "fx:id=\"oryginalImage\" was not injected: check your FXML file 'sample.fxml'.";
@@ -92,11 +96,23 @@ public class Controller {
         assert angleL != null : "fx:id=\"angleL\" was not injected: check your FXML file 'sample.fxml'.";
         assert countEmiters != null : "fx:id=\"countEmiters\" was not injected: check your FXML file 'sample.fxml'.";
 
-
-//        final ProgressIndicator pi = new ProgressIndicator(0);
+        setUpTextFormatters();
 
         slider.valueProperty().addListener((ov, old_val, new_val) -> progressBar.setProgress(new_val.doubleValue() / 100));
+    }
 
+    private void setUpTextFormatters() {
+        Pattern doublePattern = Pattern.compile("\\-?\\d*|\\d+\\,\\d*");
+        Pattern intPattern = Pattern.compile("\\d*");
 
+        angleAlfa.setTextFormatter(getFormater(doublePattern));
+        angleL.setTextFormatter(getFormater(doublePattern));
+        countEmiters.setTextFormatter(getFormater(intPattern));
+    }
+
+    private TextFormatter getFormater(Pattern pattern) {
+        return new TextFormatter((UnaryOperator<TextFormatter.Change>) change -> {
+            return pattern.matcher(change.getControlNewText()).matches() ? change : null;
+        });
     }
 }
