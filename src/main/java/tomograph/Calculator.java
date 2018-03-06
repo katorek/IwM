@@ -114,7 +114,6 @@ public class Calculator {
 //                    double avg = average(line);
 //                    points.addAll(line);
                     sinogram[i][n/2-j]=  average(bresenham.findLine(p1, p2));
-                    //todo dodanie averaga do sinogramu
                 }
 
                 for (int j = 1; j <= emiters / 2; j++) {
@@ -129,9 +128,7 @@ public class Calculator {
 
                 points.addAll(line);
             }
-//            bresenham.plot(size, points);
             points.clear();
-            //todo zamiast dodawac punkty do points dodawac sumy po elementach do sinogramu
         }
 
 
