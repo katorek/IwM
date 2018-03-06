@@ -26,7 +26,7 @@ public class BresenhamTest {
 
 
         arr = new int[size][size];
-        List<java.awt.Point> line = bresenham.findLine(arr, p1, p2);
+        List<Point> line = bresenham.findLine(p1, p2);
 
 //        bresenham.findLine(arr, p1 , p2);
         bresenham.plot(arr,line);
