@@ -114,5 +114,46 @@
             </AnchorPane>
         </content>
       </Tab>
+      <Tab fx:id="sinogramImgTab" closable="false" disable="true" text="Sinogram - obraz">
+        <content>
+          <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
+               <children>
+                  <ImageView fx:id="sinogramImg" fitHeight="530.0" fitWidth="530.0" layoutX="175.0" layoutY="206.0" pickOnBounds="true" preserveRatio="true" AnchorPane.bottomAnchor="10.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="10.0" />
+               </children>
+            </AnchorPane>
+        </content>
+      </Tab>
+      <Tab fx:id="biggerImgTab" closable="false" disable="true" text="Wyjściowy obraz - większy">
+        <content>
+          <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
+               <children>
+                  <VBox alignment="CENTER" spacing="10.0" AnchorPane.bottomAnchor="10.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="10.0">
+                     <children>
+                        <ImageView fx:id="copyOutputImage" fitHeight="480.0" fitWidth="480.0" pickOnBounds="true" preserveRatio="true" />
+                        <VBox alignment="CENTER">
+                           <children>
+                              <Label fx:id="sliderProgressCopy" text="Iteracja" />
+                              <StackPane>
+                                 <children>
+                                    <ProgressBar fx:id="progressBarCopy" prefWidth="534.0" progress="0.0">
+                                       <padding>
+                                          <Insets bottom="15.0" left="8.0" right="9.0" top="8.0" />
+                                       </padding>
+                                    </ProgressBar>
+                                    <Slider fx:id="sliderCopy" disable="true" prefWidth="530.0">
+                                       <padding>
+                                          <Insets bottom="15.0" left="10.0" right="10.0" top="5.0" />
+                                       </padding>
+                                    </Slider>
+                                 </children>
+                              </StackPane>
+                           </children>
+                        </VBox>
+                     </children>
+                  </VBox>
+               </children>
+            </AnchorPane>
+        </content>
+      </Tab>
    </tabs>
 </TabPane>

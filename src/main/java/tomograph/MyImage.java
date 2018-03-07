@@ -2,6 +2,9 @@ package tomograph;
 
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.image.PixelWriter;
+import javafx.scene.image.WritableImage;
+import javafx.scene.paint.Color;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -49,11 +52,32 @@ public class MyImage {
         return Calculator.getImage(greyScaleImgArr);
     }
 
+    private static Image printImg(int[][] arr){
+        WritableImage img = new WritableImage(arr.length, arr[0].length);
+        PixelWriter px = img.getPixelWriter();
+        for (int i = 0; i < arr.length; i++) {
+            for (int j = 0; j < arr[i].length; j++) {
+                px.setColor(i, j, Color.grayRgb(arr[i][j]));
+            }
+        }
+        return img;
+    }
+
+    public static Image printImg(double[][] arr){
+        int[][] intArr = new int[arr.length][arr[0].length];
+        for (int i = 0; i < arr.length; i++) {
+            for (int j = 0; j < arr[i].length; j++) {
+                intArr[i][j] = (int) arr[i][j];
+            }
+        }
+        return printImg(intArr);
+    }
+
     public java.awt.Image getAwtImage() {
         return awtImage;
     }
 
-    public javafx.scene.image.Image getFxImage() {
+    public Image getFxImage() {
         return fxImage;
     }
 }
