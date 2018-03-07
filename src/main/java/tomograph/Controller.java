@@ -6,17 +6,27 @@ import java.util.ResourceBundle;
 import java.util.function.UnaryOperator;
 import java.util.regex.Pattern;
 
+import javafx.application.Platform;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.stage.FileChooser;
 
 
 public class Controller {
     private double angleL, angleA;
-    private int iterations, emiters;
+    private int iterations, emiters, currentIter;
 
     private Calculator calculator;
+
+    @FXML
+    private Tab sinogramTab;
+
+    @FXML
+    private TextArea sinogramTextArea;
 
     @FXML
     private ResourceBundle resources;
@@ -55,6 +65,12 @@ public class Controller {
     private TextField iterationsTextField;
 
     @FXML
+    private Label sliderProgress;
+
+    @FXML
+    private CheckBox itersRequiredCheckBox;
+
+    @FXML
     private void chooseImage() {
 
         File file = loadFile();
@@ -65,9 +81,12 @@ public class Controller {
 
         calculator = new Calculator(myImage.getGreyScaleImgArr().length);
 
+        countEmitersTextField.setText(String.valueOf(myImage.getGreyScaleImgArr().length));
+
         calculator.setGreyScaleArr(myImage.getGreyScaleImgArr());
 
-        oryginalImage.setImage(myImage.getFxImage());
+//        oryginalImage.setImage(myImage.getFxImage());
+        oryginalImage.setImage(myImage.greyScaledImg());
 
         int[][] arr = myImage.getGreyScaleImgArr();
 
@@ -96,16 +115,35 @@ public class Controller {
     @FXML
     private void analyze() {
         parseVariables();
-        double[][] sinogram = calculator.getSinogram(new Settings(emiters, iterations, angleL, angleA));
+        Settings settings = new Settings(emiters, iterations, angleL, angleA);
+        double[][] sinogram = calculator.getSinogram(settings);
         for (int i = 0; i < sinogram.length; i++) {
-            System.out.format("%3.2f:\t",i*angleA);
+//            System.out.format("%3.2f:\t",i*angleA);
             for (int j = 0; j < sinogram[0].length; j++) {
-                System.out.format("%3.2f\t", sinogram[i][j]);
-
+//                System.out.format("%3.2f\t", sinogram[i][j]);
             }
-            System.out.println();
+//            System.out.println();
 
         }
+        slider.setDisable(false);
+        Image image = calculator.renderImgFromSinogram(-1);
+
+        sinogramTextArea.setText(printSinogram(sinogram,settings));
+        sinogramTab.setDisable(false);
+        outputImage.setImage(image);
+    }
+
+    private String printSinogram(double[][] sinogram, Settings s) {
+        StringBuilder sb = new StringBuilder();
+
+        for (int angle = 0; angle < s.getI(); angle++) {
+            sb.append(String.format("%5.1f  \t",s.getA()*angle));
+            for (int detector = 0; detector < sinogram[angle].length; detector++) {
+                sb.append(String.format("%6.2f\t",sinogram[angle][detector]));
+            }
+            sb.append("\n");
+        }
+        return sb.toString();
     }
 
     private void parseVariables() {
@@ -132,6 +170,17 @@ public class Controller {
         return out;
     }
 
+    @FXML
+    private void itersRequiredCheckBoxValueChange() {
+        System.err.println("Val changed");
+        if (itersRequiredCheckBox.isSelected()) {
+            iterationsTextField.setDisable(true);
+            int iRequired = (int) (180 / Double.parseDouble(angleAlfaTextField.getText().replace(",", ".")));
+            iterationsTextField.setText(String.valueOf(iRequired));
+        } else {
+            iterationsTextField.setDisable(false);
+        }
+    }
 
     @FXML
     void initialize() {
@@ -144,18 +193,54 @@ public class Controller {
         assert angleLtextField != null : "fx:id=\"angleLtextField\" was not injected: check your FXML file 'window.fxml'.";
         assert countEmitersTextField != null : "fx:id=\"countEmitersTextField\" was not injected: check your FXML file 'window.fxml'.";
         assert iterationsTextField != null : "fx:id=\"iterationsTextField\" was not injected: check your FXML file 'window.fxml'.";
-
+        assert sliderProgress != null : "fx:id=\"sliderProgress\" was not injected: check your FXML file 'window.fxml'.";
+        assert itersRequiredCheckBox != null : "fx:id=\"itersRequiredCheckBox\" was not injected: check your FXML file 'window.fxml'.";
+        assert sinogramTextArea != null : "fx:id=\"sinogramTextArea\" was not injected: check your FXML file 'window.fxml'.";
+        assert sinogramTab != null : "fx:id=\"sinogramTab\" was not injected: check your FXML file 'window.fxml'.";
 
         setUpTextFormatters();
 
         slider.valueProperty().addListener((ov, old_val, new_val) -> progressBar.setProgress(new_val.doubleValue() / 100));
 
         setInitValues();
+        setUpSlider();
+        setUpTextFields();
+    }
+
+    private void setUpTextFields() {
+
+        angleAlfaTextField.selectedTextProperty().addListener((o, old, new_val) -> {
+            System.err.println("Changed");
+            if (itersRequiredCheckBox.isSelected()) {
+                iterationsTextField.setText(String.valueOf((int) (180 / Double.parseDouble(angleAlfaTextField.getText().replace(",", ".")))));
+            }
+        });
+    }
+
+//    private void setUpCheckBox() {
+//        itersRequiredCheckBox.selectedProperty().addListener((ov, old_val, new_val) -> itersRequiredCheckBoxValueChange());
+//    }
+
+    private void setUpSlider() {
+        slider.valueProperty().addListener((ov, old_val, new_val) -> {
+            int prev = currentIter;
+            currentIter = (int) (new_val.doubleValue() * calculator.getIterations() / 100);
+            if(prev != currentIter)
+                updateOutputImage();
+            sliderProgress.setText(String.format("Iteracja: %d", currentIter));
+//            outputImage.setImage(calculator.renderImgFromSinogram(currentIter));
+        });
+    }
+
+    private void updateOutputImage() {
+        Platform.runLater(() -> {
+            outputImage.setImage(calculator.renderImgFromSinogram(currentIter));
+        });
     }
 
     private void setInitValues() {
         angleAlfaTextField.setText("1");
-        angleLtextField.setText("90");
+        angleLtextField.setText("180");
         countEmitersTextField.setText("90");
         iterationsTextField.setText("180");
     }

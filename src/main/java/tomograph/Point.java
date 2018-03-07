@@ -1,9 +1,9 @@
 package tomograph;
 
-public class Point extends java.awt.Point{
+public class Point extends java.awt.Point {
 
     public Point(int x, int y) {
-        super(x,y);
+        super(x, y);
     }
 
     public Point() {
@@ -50,5 +50,15 @@ public class Point extends java.awt.Point{
         int result = x;
         result = 31 * result + y;
         return result;
+    }
+
+    public static Point validatePoint(Point p, int size) {
+        if (p.x < 0) p.x = 0;
+        if (p.y < 0) p.y = 0;
+
+        if (p.x >= size) p.x = size - 1;
+        if (p.y >= size) p.y = size - 1;
+
+        return p;
     }
 }

@@ -14,7 +14,7 @@ public class BresenhamTest {
     @Before
     public void init() {
         r = new Random();
-        bresenham = new Bresenham();
+        bresenham = new Bresenham(size);
     }
 
     @Test

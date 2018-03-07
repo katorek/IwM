@@ -13,6 +13,11 @@ import java.util.List;
  * from: http://www.sanfoundry.com/java-program-bresenham-line-algorithm/
  * **/
 public class Bresenham {
+    private int size;
+
+    public Bresenham(int size){
+        this.size = size;
+    }
     /** function findLine() - to find that belong to line connecting the two points **/
     public List<Point> findLine(int x0, int y0, int x1, int y1) {
         List<Point> line = new ArrayList<Point>();
@@ -75,6 +80,8 @@ public class Bresenham {
     }
 
     public List<Point> findLine(Point p1, Point p2) {
+        p1 = Point.validatePoint(p1, size);
+        p2 = Point.validatePoint(p2, size);
 //        System.err.println("p1: "+ p1.toString()+", p2: "+p2.toString());
         return findLine(p1.x, p1.y, p2.x, p2.y);
     }

@@ -1,5 +1,6 @@
 package tomograph;
 
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 
 import javax.imageio.ImageIO;
@@ -42,6 +43,10 @@ public class MyImage {
 
     public int[][] getGreyScaleImgArr(){
         return greyScaleImgArr;
+    }
+
+    public Image greyScaledImg(){
+        return Calculator.getImage(greyScaleImgArr);
     }
 
     public java.awt.Image getAwtImage() {
