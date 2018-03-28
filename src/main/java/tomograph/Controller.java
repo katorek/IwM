@@ -7,16 +7,20 @@ import java.util.function.UnaryOperator;
 import java.util.regex.Pattern;
 
 import javafx.application.Platform;
+import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 
 
 public class Controller {
     private double angleL, angleA;
     private int iterations, emiters, currentIter;
+    private Storage storage;
 
     private Calculator calculator;
 
@@ -111,8 +115,39 @@ public class Controller {
         sinogramImgView.setImage(MyImage.printImg(sinogram));
 
 
-
         analyzeButton.setDisable(false);
+        storage = new Storage(calculator);
+
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        Label lab = new Label("Przetwarzanie");
+        Task task = new Task<Void>() {
+            @Override
+            protected Void call() throws Exception {
+                storage.renderImages();
+                int cur = storage.getRenderedImagesNumber();
+                int max = calculator.getIterations() * 2;
+                while (cur != max) {
+//                    Thread.sleep(100);
+//                    double processed = cur / max;
+//                    lab.setText(String.format("%5.2f%",processed));
+                    cur = storage.getRenderedImagesNumber();
+                    updateProgress(cur, max);
+                }
+//                lab.setText("Zakonczono !");
+                return null;
+            }
+        };
+
+        alert.setWidth(400);
+        alert.setHeight(100);
+        alert.setHeaderText(null);
+        ProgressBar pb = new ProgressBar();
+//        pb.setMaxWidth(pb.getParent().getScene().getWidth());
+        pb.progressProperty().bind(task.progressProperty());
+        alert.getDialogPane().setContent(new VBox(lab,pb));
+        alert.show();
+        new Thread(task).start();
+
     }
 
     @FXML
@@ -125,12 +160,26 @@ public class Controller {
         sliderCopy.setDisable(false);
 
         parseVariables();
-        Image image = calculator.renderImgFromSinogram(iterations - 1, filterCheckBox.isSelected());
+
+        //check if img is available
+
+        Image image = getImage(iterations - 1, filterCheckBox.isSelected());
+//        Image image = calculator.renderImgFromSinogram(iterations - 1, filterCheckBox.isSelected());
 
         outputImageView.setImage(image);
         copyOutputImageView.setImage(image);
 
+
 //        resize();
+    }
+
+    private Image getImage(int i, boolean b) {
+        if (storage.exists(i, b)) {
+            return storage.getImage(i, b);
+
+        } else {
+            return calculator.renderImgFromSinogram(i, b);
+        }
     }
 
     private String printSinogram(double[][] sinogram, Settings s) {
@@ -229,13 +278,6 @@ public class Controller {
 //        setUpImgViews();
     }
 
-    private void resize() {
-        copyOutputImageView.fitWidthProperty().bind(copyOutputImageView.getScene().widthProperty());
-        copyOutputImageView.fitHeightProperty().bind(copyOutputImageView.getScene().heightProperty());
-
-        sinogramImgView.fitWidthProperty().bind(sinogramImgView.getScene().widthProperty());
-        sinogramImgView.fitHeightProperty().bind(sinogramImgView.getScene().heightProperty());
-    }
 
     private void setUpTextFields() {
 
@@ -258,6 +300,7 @@ public class Controller {
     private Thread getCalcualtingThread() {
         return new Thread(() -> myImg.mediumSquaredError(oryginalImgView, outputImageView));
     }
+
     private Thread getUpdatingThread() {
         return new Thread(this::updateOutputImage);
     }
@@ -274,9 +317,11 @@ public class Controller {
         sliderProgressCopyLabel.setText(String.format("Iteracja: %d\tBłąd średniokwadratowy: %5.2f", currentIter, myImg.getError()));
     }
 
+
     private void updateOutputImage() {
         Platform.runLater(() -> {
-            Image im = calculator.renderImgFromSinogram(currentIter, filterCheckBox.isSelected());
+            Image im = getImage(currentIter, filterCheckBox.isSelected());
+//            Image im = calculator.renderImgFromSinogram(currentIter, filterCheckBox.isSelected());
             outputImageView.setImage(im);
             copyOutputImageView.setImage(im);
         });

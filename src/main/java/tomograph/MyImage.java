@@ -7,6 +7,7 @@ import javafx.scene.image.WritableImage;
 import javafx.scene.paint.Color;
 
 import javax.imageio.ImageIO;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.Raster;
 import java.io.File;
@@ -21,13 +22,35 @@ public class MyImage {
     private int[][] greyScaleImgArr;
     private double error;
 
+    public static BufferedImage toBufferedImage(java.awt.Image img)
+    {
+        if (img instanceof BufferedImage)
+        {
+            return (BufferedImage) img;
+        }
+
+        // Create a buffered image with transparency
+        BufferedImage bimage = new BufferedImage(img.getWidth(null), img.getHeight(null), BufferedImage.TYPE_INT_ARGB);
+
+        // Draw the image on to the buffered image
+        Graphics2D bGr = bimage.createGraphics();
+        bGr.drawImage(img, 0, 0, null);
+        bGr.dispose();
+
+        // Return the buffered image
+        return bimage;
+    }
+
     public MyImage(File file) {
         error = 0.0;
         try {
             fxImage = new javafx.scene.image.Image(file.toURI().toString());
             //resizowanie ewentualne
             awtImage = ImageIO.read(file);
+//            ImageIO.re
             int pSize = prefferedSize();
+//            awtImage = new BufferedImage() awtImage.getScaledInstance(pSize, pSize, java.awt.Image.SCALE_DEFAULT).getR;
+            awtImage = toBufferedImage(awtImage.getScaledInstance(pSize, pSize, java.awt.Image.SCALE_DEFAULT));
 
             greyScaleImgArr = new int[pSize][pSize];
 
