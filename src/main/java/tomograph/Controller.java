@@ -7,8 +7,6 @@ import java.util.function.UnaryOperator;
 import java.util.regex.Pattern;
 
 import javafx.application.Platform;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
@@ -23,10 +21,10 @@ public class Controller {
     private Calculator calculator;
 
     @FXML
-    private Tab sinogramTab, biggerImgTab, sinogramImgTab;
+    private Tab sinogramTab, biggerImgTab, sinogramImgTab, sinogramFilteredTab;
 
     @FXML
-    private TextArea sinogramTextArea;
+    private TextArea sinogramTextArea, sinogramFilteredTextArea;
 
     @FXML
     private ResourceBundle resources;
@@ -41,46 +39,43 @@ public class Controller {
     private ProgressBar progressBar, progressBarCopy;
 
     @FXML
-    private ImageView oryginalImage, outputImage, copyOutputImage, sinogramImg;
+    private ImageView oryginalImgView, outputImageView, copyOutputImageView, sinogramImgView, sinogramFilteredImgView;
 
     @FXML
-    private Button imagePickButton, analyzeButton;
+    private Button imagePickButton, analyzeButton, sinogramButton;
 
     @FXML
     private TextField angleAlfaTextField, angleLtextField, countEmitersTextField, iterationsTextField;
 
     @FXML
-    private Label sliderProgress, sliderProgressCopy;
+    private Label sliderProgressLabel, sliderProgressCopyLabel;
 
     @FXML
-    private CheckBox itersRequiredCheckBox;
+    private CheckBox itersRequiredCheckBox, filterCheckBox;
 
     @FXML
     private void chooseImage() {
+
+        slider.setDisable(true);
+        sliderCopy.setDisable(true);
 
         File file = loadFile();
 
         if (file == null) return;
 
-        MyImage myImage = new MyImage(file);
+        myImg = new MyImage(file);
 
-        calculator = new Calculator(myImage.getGreyScaleImgArr().length);
+        calculator = new Calculator(myImg.getGreyScaleImgArr().length);
 
-        countEmitersTextField.setText(String.valueOf(myImage.getGreyScaleImgArr().length));
+        countEmitersTextField.setText(String.valueOf(myImg.getGreyScaleImgArr().length));
 
-        calculator.setGreyScaleArr(myImage.getGreyScaleImgArr());
+        calculator.setGreyScaleArr(myImg.getGreyScaleImgArr());
 
-//        oryginalImage.setImage(myImage.getFxImage());
-        oryginalImage.setImage(myImage.greyScaledImg());
+        oryginalImgView.setImage(myImg.greyScaledImg());
 
-        int[][] arr = myImage.getGreyScaleImgArr();
+        analyzeButton.setDisable(true);
+        sinogramButton.setDisable(false);
 
-        analyzeButton.setDisable(false);
-
-        //co jaki kat wyzanczyc punkty !
-//        double kAngle = Double.parseDouble(angleLtextField.getText()) / Double.parseDouble(countEmitersTextField.getText());
-        //rownianie okregu to 1/4*x^2 + 1/4*y^2 - 1/4 = 0
-        //punkt startowy na samej gorze (0,s/2)
     }
 
     private File loadFile() {
@@ -98,26 +93,44 @@ public class Controller {
     }
 
     @FXML
-    private void analyze() {
+    private void calcSinogram() {
         parseVariables();
-        Settings settings = new Settings(emiters, iterations, angleL, angleA);
-        double[][] sinogram = calculator.getSinogram(settings);
+        Settings settings = new Settings(emiters, iterations + 1, angleL, angleA);
 
+        calculator.calculateSinograms(settings);
+
+        double[][] sinogram = calculator.getSinogram();
+
+        sinogramTab.setDisable(false);
+        sinogramTextArea.setText(printSinogram(sinogram, settings));
+
+        sinogramFilteredTab.setDisable(false);
+        sinogramFilteredTextArea.setText(printSinogram(calculator.getSinogramFiltered(), settings));
+
+        sinogramImgTab.setDisable(false);
+        sinogramImgView.setImage(MyImage.printImg(sinogram));
+
+
+
+        analyzeButton.setDisable(false);
+    }
+
+    @FXML
+    private void analyze() {
+        calculator.setFiltering(filterCheckBox.isSelected());
 
         slider.setDisable(false);
 
         biggerImgTab.setDisable(false);
         sliderCopy.setDisable(false);
-        Image image = calculator.renderImgFromSinogram(-1);
 
-        sinogramTab.setDisable(false);
-        sinogramTextArea.setText(printSinogram(sinogram, settings));
+        parseVariables();
+        Image image = calculator.renderImgFromSinogram(iterations - 1, filterCheckBox.isSelected());
 
-        sinogramImgTab.setDisable(false);
-        sinogramImg.setImage(MyImage.printImg(sinogram));
+        outputImageView.setImage(image);
+        copyOutputImageView.setImage(image);
 
-        outputImage.setImage(image);
-        copyOutputImage.setImage(image);
+//        resize();
     }
 
     private String printSinogram(double[][] sinogram, Settings s) {
@@ -171,25 +184,38 @@ public class Controller {
 
     @FXML
     void initialize() {
-        assert oryginalImage != null : "fx:id=\"oryginalImage\" was not injected: check your FXML file 'window.fxml'.";
-        assert outputImage != null : "fx:id=\"outputImage\" was not injected: check your FXML file 'window.fxml'.";
+        assert oryginalImgView != null : "fx:id=\"oryginalImgView\" was not injected: check your FXML file 'window.fxml'.";
+        assert outputImageView != null : "fx:id=\"outputImageView\" was not injected: check your FXML file 'window.fxml'.";
+        assert sinogramImgView != null : "fx:id=\"sinogramImgView\" was not injected: check your FXML file 'window.fxml'.";
+        assert sinogramFilteredImgView != null : "fx:id=\"sinogramFilteredImgView\" was not injected: check your FXML file 'window.fxml'.";
+        assert copyOutputImageView != null : "fx:id=\"copyOutputImageView\" was not injected: check your FXML file 'window.fxml'.";
+
         assert imagePickButton != null : "fx:id=\"imagePickButton\" was not injected: check your FXML file 'window.fxml'.";
+        assert sinogramButton != null : "fx:id=\"sinogramButton\" was not injected: check your FXML file 'window.fxml'.";
+
         assert slider != null : "fx:id=\"slider\" was not injected: check your FXML file 'window.fxml'.";
         assert sliderCopy != null : "fx:id=\"sliderCopy\" was not injected: check your FXML file 'window.fxml'.";
+
         assert progressBar != null : "fx:id=\"progressBar\" was not injected: check your FXML file 'window.fxml'.";
         assert progressBarCopy != null : "fx:id=\"progressBarCopy\" was not injected: check your FXML file 'window.fxml'.";
+
         assert angleAlfaTextField != null : "fx:id=\"angleAlfaTextField\" was not injected: check your FXML file 'window.fxml'.";
         assert angleLtextField != null : "fx:id=\"angleLtextField\" was not injected: check your FXML file 'window.fxml'.";
         assert countEmitersTextField != null : "fx:id=\"countEmitersTextField\" was not injected: check your FXML file 'window.fxml'.";
         assert iterationsTextField != null : "fx:id=\"iterationsTextField\" was not injected: check your FXML file 'window.fxml'.";
-        assert sliderProgress != null : "fx:id=\"sliderProgress\" was not injected: check your FXML file 'window.fxml'.";
-        assert sliderProgressCopy != null : "fx:id=\"sliderProgressCopy\" was not injected: check your FXML file 'window.fxml'.";
+
+        assert sliderProgressLabel != null : "fx:id=\"sliderProgressLabel\" was not injected: check your FXML file 'window.fxml'.";
+        assert sliderProgressCopyLabel != null : "fx:id=\"sliderProgressCopyLabel\" was not injected: check your FXML file 'window.fxml'.";
+
         assert itersRequiredCheckBox != null : "fx:id=\"itersRequiredCheckBox\" was not injected: check your FXML file 'window.fxml'.";
+        assert filterCheckBox != null : "fx:id=\"filterCheckBox\" was not injected: check your FXML file 'window.fxml'.";
+
         assert sinogramTextArea != null : "fx:id=\"sinogramTextArea\" was not injected: check your FXML file 'window.fxml'.";
+        assert sinogramFilteredTextArea != null : "fx:id=\"sinogramFilteredTextArea\" was not injected: check your FXML file 'window.fxml'.";
+
         assert sinogramTab != null : "fx:id=\"sinogramTab\" was not injected: check your FXML file 'window.fxml'.";
+        assert sinogramFilteredTab != null : "fx:id=\"sinogramFilteredTab\" was not injected: check your FXML file 'window.fxml'.";
         assert sinogramImgTab != null : "fx:id=\"sinogramImgTab\" was not injected: check your FXML file 'window.fxml'.";
-        assert sinogramImg != null : "fx:id=\"sinogramImg\" was not injected: check your FXML file 'window.fxml'.";
-        assert copyOutputImage != null : "fx:id=\"copyOutputImage\" was not injected: check your FXML file 'window.fxml'.";
 
         setUpTextFormatters();
 
@@ -199,21 +225,27 @@ public class Controller {
         setInitValues();
         setUpSlider();
         setUpTextFields();
+
+//        setUpImgViews();
+    }
+
+    private void resize() {
+        copyOutputImageView.fitWidthProperty().bind(copyOutputImageView.getScene().widthProperty());
+        copyOutputImageView.fitHeightProperty().bind(copyOutputImageView.getScene().heightProperty());
+
+        sinogramImgView.fitWidthProperty().bind(sinogramImgView.getScene().widthProperty());
+        sinogramImgView.fitHeightProperty().bind(sinogramImgView.getScene().heightProperty());
     }
 
     private void setUpTextFields() {
 
         angleAlfaTextField.selectedTextProperty().addListener((o, old, new_val) -> {
-            System.err.println("Changed");
+//            System.err.println("Changed");
             if (itersRequiredCheckBox.isSelected()) {
-                iterationsTextField.setText(String.valueOf((int) (180 / Double.parseDouble(angleAlfaTextField.getText().replace(",", ".")))));
+                iterationsTextField.setText(String.valueOf((int) (180 / Double.parseDouble(angleAlfaTextField.getText().replace(",", "."))) - 1));
             }
         });
     }
-
-//    private void setUpCheckBox() {
-//        itersRequiredCheckBox.selectedProperty().addListener((ov, old_val, new_val) -> itersRequiredCheckBoxValueChange());
-//    }
 
     private void setUpSlider() {
         slider.valueProperty().addListener((ov, old_val, new_val) -> updateIter(new_val));
@@ -221,29 +253,40 @@ public class Controller {
         sliderCopy.valueProperty().addListener((ov, old_val, new_val) -> updateIter(new_val));
     }
 
-    private void updateIter(Number num) {
+    private MyImage myImg;
 
+    private Thread getCalcualtingThread() {
+        return new Thread(() -> myImg.mediumSquaredError(oryginalImgView, outputImageView));
+    }
+    private Thread getUpdatingThread() {
+        return new Thread(this::updateOutputImage);
+    }
+
+
+    private void updateIter(Number num) {
         int prev = currentIter;
         currentIter = (int) (num.doubleValue() * calculator.getIterations() / 100);
-        if (prev != currentIter)
-            updateOutputImage();
-        sliderProgress.setText(String.format("Iteracja: %d", currentIter));
-        sliderProgressCopy.setText(String.format("Iteracja: %d", currentIter));
+        if (prev != currentIter) {
+            getCalcualtingThread().start();
+            getUpdatingThread().start();
+        }
+        sliderProgressLabel.setText(String.format("Iteracja: %d\tBłąd średniokwadratowy: %5.2f", currentIter, myImg.getError()));
+        sliderProgressCopyLabel.setText(String.format("Iteracja: %d\tBłąd średniokwadratowy: %5.2f", currentIter, myImg.getError()));
     }
 
     private void updateOutputImage() {
         Platform.runLater(() -> {
-            Image im = calculator.renderImgFromSinogram(currentIter);
-            outputImage.setImage(im);
-            copyOutputImage.setImage(im);
+            Image im = calculator.renderImgFromSinogram(currentIter, filterCheckBox.isSelected());
+            outputImageView.setImage(im);
+            copyOutputImageView.setImage(im);
         });
     }
 
     private void setInitValues() {
         angleAlfaTextField.setText("1");
-        angleLtextField.setText("180");
+        angleLtextField.setText("179");
         countEmitersTextField.setText("90");
-        iterationsTextField.setText("180");
+        iterationsTextField.setText("179");
     }
 
     private void setUpTextFormatters() {

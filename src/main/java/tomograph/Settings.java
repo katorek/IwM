@@ -42,4 +42,5 @@ public class Settings {
     public void setA(double a) {
         this.a = a;
     }
+
 }

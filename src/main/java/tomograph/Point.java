@@ -61,4 +61,12 @@ public class Point extends java.awt.Point {
 
         return p;
     }
+
+    @Override
+    public String toString() {
+        return "Point{" +
+                "x=" + x +
+                ", y=" + y +
+                "}";
+    }
 }
